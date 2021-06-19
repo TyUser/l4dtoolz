@@ -33,7 +33,7 @@ extern CGlobalVars *gpGlobals;
 #define GetEngineFactory engineFactory
 #define GetServerFactory serverFactory
 #define MM_Format snprintf
-#define	GetCGlobals	pGlobals
+#define    GetCGlobals    pGlobals
 #define ENGINE_CALL(func) SH_CALL(m_EngineCC, func)
 #else
 #define ENGINE_CALL(func) SH_CALL(engine, func)
@@ -41,6 +41,7 @@ extern CGlobalVars *gpGlobals;
 #endif
 
 #if SOURCE_ENGINE <= SE_DARKMESSIAH
+
 /**
  * Wrap the CCommand class so our code looks the same on all engines.
  */
@@ -51,6 +52,7 @@ public:
 	{
 		return engine->Cmd_Args();
 	}
+
 	int ArgC()
 	{
 		return engine->Cmd_Argc();
@@ -72,13 +74,14 @@ public:
 
 inline int IndexOfEdict(const edict_t *pEdict)
 {
-	return (int)(pEdict - gpGlobals->baseEdict);
+	return (int) (pEdict - gpGlobals->baseEdict);
 }
+
 inline edict_t *PEntityOfEntIndex(int iEntIndex)
 {
 	if (iEntIndex >= 0 && iEntIndex < gpGlobals->maxEntities)
 	{
-		return (edict_t *)(gpGlobals->baseEdict + iEntIndex);
+		return (edict_t * )(gpGlobals->baseEdict + iEntIndex);
 	}
 	return NULL;
 }
@@ -97,4 +100,3 @@ inline edict_t *PEntityOfEntIndex(int iEntIndex)
 #endif
 
 #endif //_INCLUDE_SOURCE_ENGINE_WRAPPERS_
-

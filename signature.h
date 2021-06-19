@@ -1,7 +1,8 @@
 #ifndef _INCLUDE_SIGNATURE_
 #define _INCLUDE_SIGNATURE_
 
-struct base_addr_t{
+struct base_addr_t
+{
 	void *addr;
 	unsigned int len;
 };
