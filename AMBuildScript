@@ -197,7 +197,7 @@ class ExtensionConfig(object):
       '-Wno-overloaded-virtual',
       '-Wno-register',
       '-fvisibility-inlines-hidden',
-      '-std=c++20',
+      '-std=c++17',
     ]
 
     have_gcc = cxx.family == 'gcc'

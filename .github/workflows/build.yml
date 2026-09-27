@@ -25,12 +25,12 @@ jobs:
   build:
     name: build with mms${{ matrix.mm_version }} on ${{ matrix.os_short }}
     runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container || null }}
     strategy:
       fail-fast: false
       matrix:
         os:
           - ubuntu-latest
-          - ubuntu-22.04
           - windows-latest
 
         mm_version:
@@ -42,9 +42,7 @@ jobs:
 
           - os: ubuntu-latest
             os_short: linux
-
-          - os: ubuntu-22.04
-            os_short: oldlinux
+            container: ghcr.io/alliedmodders/build-containers/debian11-clang22:latest
 
           - os: windows-latest
             os_short: win
@@ -55,15 +53,6 @@ jobs:
         run: |
           echo "GITHUB_SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-      - name: Install (Linux)
-        if: startsWith(runner.os, 'Linux')
-        run: |
-          sudo dpkg --add-architecture i386
-          sudo apt-get update
-          sudo apt-get install -y clang g++-multilib
-          echo "CC=clang" >> $GITHUB_ENV
-          echo "CXX=clang++" >> $GITHUB_ENV
-
       - name: Checking out MM:Source
         uses: actions/checkout@v7
         with:
@@ -71,15 +60,10 @@ jobs:
           ref: ${{ matrix.mm_branch }}
           path: metamod-${{ matrix.mm_version }}
 
-      - name: Setting up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.12'
-
       - name: Setting up ambuild
         run: |
-          python -m pip install wheel
-          pip install git+https://github.com/accelerator74/ambuild@nog3
+          python3 -m pip install --upgrade pip wheel
+          python3 -m pip install git+https://github.com/accelerator74/ambuild@nog3
 
       - name: Checking out hl2sdk-l4d
         uses: actions/checkout@v7
@@ -108,19 +92,27 @@ jobs:
 
       - name: Compiling ${{ github.event.repository.name }}-l4d files
         working-directory: src
+        shell: bash
         run: |
           mkdir build_l4d
           cd build_l4d
-          python ../configure.py --enable-optimize --sdks="l4d" --hl2sdk-manifest-path="${{ github.workspace }}/hl2sdk-manifests" --mms-path="${{ github.workspace }}/metamod-${{ matrix.mm_version }}"
+          python3 ../configure.py --enable-optimize --sdks="l4d" --hl2sdk-manifest-path="$GITHUB_WORKSPACE/hl2sdk-manifests" --mms-path="$GITHUB_WORKSPACE/metamod-${{ matrix.mm_version }}"
           ambuild
+          if [ "${{ matrix.os_short }}" = "linux" ]; then
+            strip --strip-debug package/addons/l4dtoolz/*.so
+          fi
 
       - name: Compiling ${{ github.event.repository.name }}-l4d2 files
         working-directory: src
+        shell: bash
         run: |
           mkdir build_l4d2
           cd build_l4d2
-          python ../configure.py --enable-optimize --sdks="l4d2" --hl2sdk-manifest-path="${{ github.workspace }}/hl2sdk-manifests" --mms-path="${{ github.workspace }}/metamod-${{ matrix.mm_version }}"
+          python3 ../configure.py --enable-optimize --sdks="l4d2" --hl2sdk-manifest-path="$GITHUB_WORKSPACE/hl2sdk-manifests" --mms-path="$GITHUB_WORKSPACE/metamod-${{ matrix.mm_version }}"
           ambuild
+          if [ "${{ matrix.os_short }}" = "linux" ]; then
+            strip --strip-debug package/addons/l4dtoolz/*.so
+          fi
 
       - name: Uploading l4d package
         uses: actions/upload-artifact@v7
@@ -139,6 +131,8 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+        contents: write
 
     steps:
       - name: Download artifacts
