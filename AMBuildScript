@@ -302,10 +302,19 @@ class ExtensionConfig(object):
   def configure_linux(self, cxx):
     cxx.defines += ['LINUX', '_LINUX', 'POSIX', '_FILE_OFFSET_BITS=64']
     cxx.linkflags += ['-lm']
+
+    use_libcxx = any(
+      flag.startswith('-stdlib=') and 'libc++' in flag
+      for flag in cxx.cxxflags
+    )
+
     if cxx.family == 'gcc':
-      cxx.linkflags += ['-static-libgcc']
+      cxx.linkflags += ['-static-libgcc', '-static-libstdc++']
     elif cxx.family == 'clang':
-      cxx.linkflags += ['-lgcc_eh']
+        if use_libcxx:
+            cxx.linkflags += ['-static-libgcc', '-static-libc++']
+        else:
+            cxx.linkflags += ['-lgcc_eh', '-static-libstdc++']
 
   def configure_mac(self, cxx):
     cxx.defines += ['OSX', '_OSX', 'POSIX', 'KE_ABSOLUTELY_NO_STL']
